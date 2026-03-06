@@ -7,7 +7,9 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const reportId = searchParams.get("reportId");
   const reportType = (searchParams.get("reportType") || "full") as ReportType;
-  const outLinkUid = searchParams.get("outLinkUid");
+  // 如果没有传递 outLinkUid，则回退使用测试环境的默认 UID，以避免直接显示王同学的离线 Mock 数据
+  const defaultOutLinkUid = "shareChat-1749464680618-qIYmVYDJYKdl8P7cN6863yde";
+  const outLinkUid = searchParams.get("outLinkUid") || defaultOutLinkUid;
 
   if (!reportId) {
     return NextResponse.json(

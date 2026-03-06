@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { Suspense, useState, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { ReportTypeCard } from "@/components/report-select/ReportTypeCard";
 import { GenerateActionBar } from "@/components/report-select/GenerateActionBar";
@@ -11,10 +11,23 @@ function ReportSelectContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const shareToken = searchParams.get("shareToken") || "";
-  const outLinkUid = searchParams.get("outLinkUid") || "";
+  const outLinkUidParam = searchParams.get("outLinkUid") || "";
 
+  const [outLinkUid, setOutLinkUid] = useState(outLinkUidParam);
   const [selectedType, setSelectedType] = useState<ReportType | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
+
+  useEffect(() => {
+    // 如果 URL 没带参数，尝试从 LocalStorage 里自动获取 FastGPT 的对话 UID
+    if (!outLinkUid) {
+      const fallbackUid =
+        localStorage.getItem("fastgpt_outLinkUid_xvV37m1BvziEorQzMXDOZaE4") ||
+        localStorage.getItem("outLinkUid");
+      if (fallbackUid) {
+        setOutLinkUid(fallbackUid);
+      }
+    }
+  }, [outLinkUid]);
 
   const handleGenerate = async () => {
     if (!selectedType) return;
