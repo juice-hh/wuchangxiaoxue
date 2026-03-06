@@ -18,14 +18,24 @@ function ReportSelectContent() {
   const [isGenerating, setIsGenerating] = useState(false);
 
   useEffect(() => {
-    // 如果 URL 没带参数，尝试从 LocalStorage 里自动获取 FastGPT 的对话 UID
+    // 如果 URL 没带参数，尝试从 LocalStorage 读取或生成全新的 outLinkUid
     if (!outLinkUid) {
-      const fallbackUid =
+      let currentUid =
         localStorage.getItem("fastgpt_outLinkUid_xvV37m1BvziEorQzMXDOZaE4") ||
         localStorage.getItem("outLinkUid");
-      if (fallbackUid) {
-        setOutLinkUid(fallbackUid);
+
+      if (!currentUid) {
+        // 生成一个新的唯一访客 ID 给这个嵌入的回话使用
+        currentUid = `shareChat-${Date.now()}-${Math.random()
+          .toString(36)
+          .slice(2, 9)}`;
+        localStorage.setItem(
+          "fastgpt_outLinkUid_xvV37m1BvziEorQzMXDOZaE4",
+          currentUid
+        );
+        localStorage.setItem("outLinkUid", currentUid);
       }
+      setOutLinkUid(currentUid);
     }
   }, [outLinkUid]);
 
@@ -62,13 +72,30 @@ function ReportSelectContent() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-28">
-      <div className="max-w-4xl mx-auto px-6 pt-14">
-        <div className="text-center mb-10">
-          <h1 className="text-2xl font-bold text-gray-900">
-            请选择要生成的报告
+    <div className="min-h-screen bg-gray-50 flex flex-col pb-28">
+      {/* 上半部分：嵌入的 FastGPT 聊天界面 */}
+      <div className="w-full flex-grow bg-white border-b border-gray-200 shadow-sm" style={{ height: '60vh', minHeight: '500px' }}>
+        {outLinkUid ? (
+          <iframe
+            src={`https://wxzs.allschool.cn/chat/share?shareId=xvV37m1BvziEorQzMXDOZaE4&outLinkUid=${outLinkUid}`}
+            className="w-full h-full border-none"
+            title="FastGPT Chat Session"
+            allow="microphone"
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center text-gray-400">
+            正在初始化聊天环境...
+          </div>
+        )}
+      </div>
+
+      {/* 下半部分：生成报告选项卡 */}
+      <div className="max-w-4xl mx-auto px-6 pt-10 pb-4 flex-shrink-0">
+        <div className="text-center mb-8">
+          <h1 className="text-xl font-bold text-gray-900">
+            完成上方对话后，请选择要生成的报告类型
           </h1>
-          <p className="mt-3 text-sm text-gray-500 max-w-lg mx-auto">
+          <p className="mt-2 text-sm text-gray-500 max-w-lg mx-auto">
             根据本次会话内容，可生成不同形式的分析报告，用于查看、归档或分享
           </p>
         </div>
