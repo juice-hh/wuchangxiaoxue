@@ -11,10 +11,11 @@ const headers = {
   Cookie: `NEXT_LOCALE=zh-CN; fastgpt_token=${FASTGPT_TOKEN}`,
 };
 
-interface ChatHistory {
+export interface ChatHistory {
   chatId: string;
   updateTime: string;
   title: string;
+  customTitle?: string;
 }
 
 interface ChatRecord {
@@ -24,19 +25,12 @@ interface ChatRecord {
 }
 
 /**
- * 从 FastGPT 获取最新的报告内容
- * 流程：
- * 1. 获取历史对话列表
- * 2. 找到包含报告的最新对话（title 不是 "家长报告" 的，说明用户已选择了编号）
- * 3. 获取该对话的消息记录
- * 4. 找到最后一条 AI 回复（即报告内容）
- * 5. 解析 markdown 文本为 ReportData
+ * 获取某个 UID 下的历史对话列表
  */
-export async function fetchLatestReport(
+export async function fetchChatHistories(
   outLinkUid: string
-): Promise<ReportData | null> {
+): Promise<ChatHistory[]> {
   try {
-    // Step 1: 获取历史列表
     const histRes = await fetch(
       `${FASTGPT_BASE}/api/core/chat/history/getHistories`,
       {
@@ -51,16 +45,26 @@ export async function fetchLatestReport(
       }
     );
     const histData = await histRes.json();
-    const histories: ChatHistory[] = histData?.data?.list || [];
+    return histData?.data?.list || [];
+  } catch (error) {
+    console.error("FastGPT fetch histories error:", error);
+    return [];
+  }
+}
 
-    if (histories.length === 0) return null;
-
-    // Step 2: 找到包含报告内容的最新对话
-    // title 不是 "家长报告" 的对话说明用户已回复编号生成了报告
-    const reportChat = histories.find((h) => h.title !== "家长报告");
+/**
+ * 根据具体的 chatId 获取该对话的报告内容
+ */
+export async function fetchReportByChatId(
+  outLinkUid: string,
+  chatId: string
+): Promise<ReportData | null> {
+  try {
+    // 为了 parseReportText 需要 title 和 updateTime，这里必须先拿到 histories 去找匹配的项
+    const histories = await fetchChatHistories(outLinkUid);
+    const reportChat = histories.find((h) => h.chatId === chatId);
     if (!reportChat) return null;
 
-    // Step 3: 获取该对话的消息记录
     const recRes = await fetch(
       `${FASTGPT_BASE}/api/core/chat/getPaginationRecords`,
       {
@@ -79,7 +83,6 @@ export async function fetchLatestReport(
     const recData = await recRes.json();
     const records: ChatRecord[] = recData?.data?.list || [];
 
-    // Step 4: 找到最后一条 AI 回复
     const aiMessages = records.filter((r) => r.obj === "AI");
     const lastAI = aiMessages[aiMessages.length - 1];
     if (!lastAI) return null;
@@ -88,12 +91,26 @@ export async function fetchLatestReport(
       lastAI.value.find((v) => v.type === "text")?.text?.content || "";
     if (!content || content.includes("请回复编号查看")) return null;
 
-    // Step 5: 解析
     return parseReportText(content, reportChat);
   } catch (error) {
-    console.error("FastGPT fetch error:", error);
+    console.error("FastGPT fetch report error:", error);
     return null;
   }
+}
+
+/**
+ * 从 FastGPT 获取最新的报告内容
+ */
+export async function fetchLatestReport(
+  outLinkUid: string
+): Promise<ReportData | null> {
+  const histories = await fetchChatHistories(outLinkUid);
+  if (histories.length === 0) return null;
+
+  const reportChat = histories.find((h) => h.title !== "家长报告");
+  if (!reportChat) return null;
+
+  return fetchReportByChatId(outLinkUid, reportChat.chatId);
 }
 
 /**

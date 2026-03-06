@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { fetchLatestReport } from "@/lib/fastgpt";
+import { fetchLatestReport, fetchReportByChatId } from "@/lib/fastgpt";
 import { generateMockReport } from "@/lib/mock-data";
 import type { ReportType } from "@/types/report";
 
@@ -7,6 +7,7 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const reportId = searchParams.get("reportId");
   const reportType = (searchParams.get("reportType") || "full") as ReportType;
+  const chatId = searchParams.get("chatId");
   // 如果没有传递 outLinkUid，则回退使用测试环境的默认 UID，以避免直接显示王同学的离线 Mock 数据
   const defaultOutLinkUid = "shareChat-1749464680618-qIYmVYDJYKdl8P7cN6863yde";
   const outLinkUid = searchParams.get("outLinkUid") || defaultOutLinkUid;
@@ -21,7 +22,10 @@ export async function GET(request: NextRequest) {
   // 尝试从 FastGPT 获取最新报告
   try {
     if (outLinkUid) {
-      const liveData = await fetchLatestReport(outLinkUid);
+      const liveData = chatId
+        ? await fetchReportByChatId(outLinkUid, chatId)
+        : await fetchLatestReport(outLinkUid);
+
       if (liveData) {
         return NextResponse.json({
           success: true,
