@@ -11,6 +11,7 @@ function ReportSelectContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const shareToken = searchParams.get("shareToken") || "";
+  const outLinkUid = searchParams.get("outLinkUid") || "";
 
   const [selectedType, setSelectedType] = useState<ReportType | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -28,9 +29,11 @@ function ReportSelectContent() {
       const data = await res.json();
 
       if (data.success) {
-        router.push(
-          `/report/view?reportId=${data.reportId}&reportType=${selectedType}`
-        );
+        let nextUrl = `/report/view?reportId=${data.reportId}&reportType=${selectedType}`;
+        if (outLinkUid) {
+          nextUrl += `&outLinkUid=${outLinkUid}`;
+        }
+        router.push(nextUrl);
       } else {
         alert("报告生成失败，请重试");
         setIsGenerating(false);

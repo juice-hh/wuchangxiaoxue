@@ -18,6 +18,7 @@ function ReportViewContent() {
   const searchParams = useSearchParams();
   const reportId = searchParams.get("reportId") || "";
   const reportType = searchParams.get("reportType") || "full";
+  const outLinkUid = searchParams.get("outLinkUid") || "";
 
   const [report, setReport] = useState<ReportData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -30,7 +31,12 @@ function ReportViewContent() {
       return;
     }
 
-    fetch(`/api/report/detail?reportId=${reportId}&reportType=${reportType}`)
+    let fetchUrl = `/api/report/detail?reportId=${reportId}&reportType=${reportType}`;
+    if (outLinkUid) {
+      fetchUrl += `&outLinkUid=${outLinkUid}`;
+    }
+
+    fetch(fetchUrl)
       .then((res) => res.json())
       .then((data) => {
         if (data.success) {
@@ -41,7 +47,7 @@ function ReportViewContent() {
       })
       .catch(() => setError("网络错误"))
       .finally(() => setLoading(false));
-  }, [reportId, reportType]);
+  }, [reportId, reportType, outLinkUid]);
 
   if (loading) {
     return (

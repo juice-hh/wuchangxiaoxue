@@ -7,6 +7,7 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const reportId = searchParams.get("reportId");
   const reportType = (searchParams.get("reportType") || "full") as ReportType;
+  const outLinkUid = searchParams.get("outLinkUid");
 
   if (!reportId) {
     return NextResponse.json(
@@ -17,12 +18,14 @@ export async function GET(request: NextRequest) {
 
   // 尝试从 FastGPT 获取最新报告
   try {
-    const liveData = await fetchLatestReport();
-    if (liveData) {
-      return NextResponse.json({
-        success: true,
-        data: { ...liveData, reportId },
-      });
+    if (outLinkUid) {
+      const liveData = await fetchLatestReport(outLinkUid);
+      if (liveData) {
+        return NextResponse.json({
+          success: true,
+          data: { ...liveData, reportId },
+        });
+      }
     }
   } catch (e) {
     console.error("FastGPT fetch failed, falling back to mock:", e);

@@ -2,8 +2,6 @@ import type { ReportData } from "@/types/report";
 
 const FASTGPT_BASE = "https://wxzs.allschool.cn";
 const SHARE_ID = "xvV37m1BvziEorQzMXDOZaE4";
-const OUT_LINK_UID =
-  "shareChat-1749464680618-qIYmVYDJYKdl8P7cN6863yde";
 const APP_ID = "69a7ce03f5d31f944311e54b";
 const FASTGPT_TOKEN =
   "65f2e7585a255006993dc11f:znKlGhq9kEvisM7wtjZByDPKfvPCnhWF";
@@ -34,7 +32,9 @@ interface ChatRecord {
  * 4. 找到最后一条 AI 回复（即报告内容）
  * 5. 解析 markdown 文本为 ReportData
  */
-export async function fetchLatestReport(): Promise<ReportData | null> {
+export async function fetchLatestReport(
+  outLinkUid: string
+): Promise<ReportData | null> {
   try {
     // Step 1: 获取历史列表
     const histRes = await fetch(
@@ -46,7 +46,7 @@ export async function fetchLatestReport(): Promise<ReportData | null> {
           offset: 0,
           pageSize: 20,
           shareId: SHARE_ID,
-          outLinkUid: OUT_LINK_UID,
+          outLinkUid,
         }),
       }
     );
@@ -70,7 +70,7 @@ export async function fetchLatestReport(): Promise<ReportData | null> {
           appId: APP_ID,
           chatId: reportChat.chatId,
           shareId: SHARE_ID,
-          outLinkUid: OUT_LINK_UID,
+          outLinkUid,
           offset: 0,
           pageSize: 30,
         }),
