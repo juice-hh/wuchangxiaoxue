@@ -31,21 +31,58 @@ export async function fetchChatHistories(
   outLinkUid: string
 ): Promise<ChatHistory[]> {
   try {
-    const histRes = await fetch(
-      `${FASTGPT_BASE}/api/core/chat/history/getHistories`,
+    const payload = {
+      messages: [{ role: "user", content: "家长报告" }],
+      shareId: SHARE_ID,
+      outLinkUid,
+      stream: false,
+      detail: true,
+    };
+
+    const res = await fetch(
+      `${FASTGPT_BASE}/api/v2/chat/completions`,
       {
         method: "POST",
         headers,
-        body: JSON.stringify({
-          offset: 0,
-          pageSize: 20,
-          shareId: SHARE_ID,
-          outLinkUid,
-        }),
+        body: JSON.stringify(payload),
       }
     );
-    const histData = await histRes.json();
-    return histData?.data?.list || [];
+
+    // 检查是否因为某种原因返回了 event-stream
+    if (res.headers.get("content-type")?.includes("text/event-stream")) {
+      console.error("FastGPT returned SSE unexpectedly for chat histories.");
+      return [];
+    }
+
+    const data = await res.json();
+
+    // FastGPT 后台工作流中，对话记录文本存在 newVariables.xb8McbHC 中
+    const listText = data?.newVariables?.xb8McbHC;
+    if (!listText) {
+      console.warn("No xb8McbHC variable found in FastGPT response:", data);
+      return [];
+    }
+
+    // 解析形如：1) chatId=xxx | updateTime=xxx | title=xxx 的文本
+    const lines = listText.split("\n").filter((l: string) => l.trim().length > 0);
+    const histories: ChatHistory[] = [];
+
+    for (const line of lines) {
+      const match = line.match(/chatId=([^|]+)\s*\|\s*updateTime=([^|]+)\s*\|\s*title=(.+)/);
+      if (match) {
+        histories.push({
+          chatId: match[1].trim(),
+          updateTime: match[2].trim(),
+          title: match[3].trim(),
+          customTitle: "",
+        });
+      }
+    }
+
+    // 按照 updateTime 降序排序
+    histories.sort((a, b) => new Date(b.updateTime).getTime() - new Date(a.updateTime).getTime());
+
+    return histories;
   } catch (error) {
     console.error("FastGPT fetch histories error:", error);
     return [];

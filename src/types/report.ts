@@ -1,5 +1,13 @@
 export type ReportType = "full" | "summary" | "risk";
 
+export interface ChatHistory {
+  chatId: string;
+  updateTime: string;
+  title: string;
+  customTitle?: string;
+  top?: boolean;
+}
+
 export interface ReportData {
   reportId: string;
   reportTitle: string;

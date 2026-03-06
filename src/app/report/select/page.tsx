@@ -118,102 +118,106 @@ function ReportSelectContent() {
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col pb-28 relative">
-      {/* 步骤 1：对话历史选择区域 */}
-      <div className="w-full px-6 pt-14 pb-6">
-        <div className="max-w-4xl mx-auto">
-          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
-            <div>
-              <h1 className="text-xl font-bold text-gray-900">第一步：选择或新建对话记录</h1>
-              <p className="text-sm text-gray-500 mt-1">
-                请先完成与 AI 的对话沟通，然后在此处勾选生成报告的依据。
-              </p>
+      <div className="w-full px-6 pt-10 pb-6">
+        <div className="max-w-4xl mx-auto space-y-8">
+
+          {/* 步骤 1：对话历史选择区域 */}
+          <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+              <div>
+                <h1 className="text-xl font-bold text-gray-900">第一步：选择对话记录</h1>
+                <p className="text-sm text-gray-500 mt-1">
+                  选择需要生成最终报告的对话记录。如果还未对话，请在此创建新对话。
+                </p>
+              </div>
+              <div className="flex items-center space-x-3">
+                <button
+                  onClick={() => setIsChatModalOpen(true)}
+                  className="flex items-center space-x-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition shadow-sm"
+                >
+                  <MessageCirclePlus className="w-4 h-4" />
+                  <span>新对话</span>
+                </button>
+                <button
+                  onClick={() => outLinkUid && fetchHistories(outLinkUid)}
+                  disabled={loadingHistories}
+                  className="flex items-center space-x-1 px-4 py-2 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 text-sm font-medium rounded-lg transition shadow-sm disabled:opacity-50"
+                >
+                  <RefreshCw className={`w-4 h-4 ${loadingHistories ? 'animate-spin' : ''}`} />
+                  <span>刷新记录</span>
+                </button>
+              </div>
             </div>
-            <div className="flex items-center space-x-3">
-              <button
-                onClick={() => setIsChatModalOpen(true)}
-                className="flex items-center space-x-1 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition shadow-sm"
-              >
-                <MessageCirclePlus className="w-4 h-4" />
-                <span>新对话</span>
-              </button>
-              <button
-                onClick={() => outLinkUid && fetchHistories(outLinkUid)}
-                disabled={loadingHistories}
-                className="flex items-center space-x-1 px-4 py-2 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 text-sm font-medium rounded-lg transition shadow-sm disabled:opacity-50"
-              >
-                <RefreshCw className={`w-4 h-4 ${loadingHistories ? 'animate-spin' : ''}`} />
-                <span>刷新记录</span>
-              </button>
+
+            {loadingHistories && histories.length === 0 ? (
+              <div className="py-12 flex justify-center items-center text-gray-400 bg-gray-50 rounded-xl">
+                <RefreshCw className="w-5 h-5 animate-spin mr-2" />
+                正在同步对话列表...
+              </div>
+            ) : histories.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 max-h-[400px] overflow-y-auto p-1">
+                {histories.map((h, index) => {
+                  const isSelected = selectedChatId === h.chatId;
+                  return (
+                    <div
+                      key={h.chatId}
+                      onClick={() => setSelectedChatId(h.chatId)}
+                      className={`cursor-pointer border p-4 rounded-xl transition-all duration-200 ${isSelected
+                          ? "border-blue-500 bg-blue-50 shadow-md ring-1 ring-blue-500"
+                          : "border-gray-200 bg-white hover:border-blue-300 hover:shadow-sm"
+                        }`}
+                    >
+                      <div className="flex justify-between items-start mb-3">
+                        <span className={`text-xs font-semibold px-2 py-1 rounded-md ${isSelected ? "bg-blue-100 text-blue-700" : "bg-gray-100 text-gray-500"
+                          }`}>
+                          编号 {histories.length - index}
+                        </span>
+                        <span className="text-xs text-gray-400">
+                          {new Date(h.updateTime).toLocaleString("zh-CN", {
+                            month: "2-digit",
+                            day: "2-digit",
+                            hour: "2-digit",
+                            minute: "2-digit"
+                          })}
+                        </span>
+                      </div>
+                      <h3 className={`text-sm font-medium line-clamp-2 ${isSelected ? "text-blue-900" : "text-gray-800"}`}>
+                        {h.title || "未命名对话"}
+                      </h3>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="py-12 flex flex-col justify-center items-center text-gray-500 bg-gray-50 rounded-xl">
+                <p className="mb-4">暂无对话记录</p>
+                <button
+                  onClick={() => setIsChatModalOpen(true)}
+                  className="text-sm text-blue-600 hover:text-blue-800 font-medium underline underline-offset-4"
+                >
+                  点击开始您的第一次沟通
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* 步骤 2：生成报告选项卡 */}
+          <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+            <h1 className="text-xl font-bold text-gray-900 mb-6">
+              第二步：选择报告类型
+            </h1>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {REPORT_TYPE_OPTIONS.map((option) => (
+                <ReportTypeCard
+                  key={option.type}
+                  {...option}
+                  selected={selectedType === option.type}
+                  onSelect={setSelectedType}
+                />
+              ))}
             </div>
           </div>
 
-          {loadingHistories && histories.length === 0 ? (
-            <div className="py-12 flex justify-center items-center text-gray-400 bg-white border border-gray-200 rounded-xl shadow-sm">
-              <RefreshCw className="w-5 h-5 animate-spin mr-2" />
-              正在同步对话列表...
-            </div>
-          ) : histories.length > 0 ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 bg-white border border-gray-200 p-4 rounded-xl gap-4 max-h-[350px] overflow-y-auto shadow-sm">
-              {histories.map((h, index) => {
-                const isSelected = selectedChatId === h.chatId;
-                return (
-                  <div
-                    key={h.chatId}
-                    onClick={() => setSelectedChatId(h.chatId)}
-                    className={`cursor-pointer border p-4 rounded-lg bg-gray-50 transition shadow-sm hover:shadow-md ${isSelected ? "border-blue-500 ring-1 ring-blue-500 bg-blue-50/30" : "border-gray-200 hover:border-blue-300"
-                      }`}
-                  >
-                    <div className="flex justify-between items-start mb-2">
-                      <span className="text-xs font-semibold text-gray-400 bg-gray-100 px-2 py-0.5 rounded">
-                        最近对话
-                      </span>
-                      <span className="text-xs text-gray-400">
-                        {new Date(h.updateTime).toLocaleString("zh-CN", {
-                          month: "2-digit",
-                          day: "2-digit",
-                          hour: "2-digit",
-                          minute: "2-digit"
-                        })}
-                      </span>
-                    </div>
-                    <h3 className="text-md font-medium text-gray-800 line-clamp-2">
-                      {h.title || "未命名对话"}
-                    </h3>
-                  </div>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="py-12 flex flex-col justify-center items-center text-gray-500 bg-white border border-gray-200 rounded-xl shadow-sm">
-              <p className="mb-4">暂无对话记录</p>
-              <button
-                onClick={() => setIsChatModalOpen(true)}
-                className="text-sm text-blue-600 hover:text-blue-800 font-medium underline underline-offset-4"
-              >
-                点击开始您的第一次沟通
-              </button>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* 步骤 2：生成报告选项卡 */}
-      <div className="max-w-4xl mx-auto w-full px-6 pt-6 pb-4 flex-shrink-0">
-        <div className="mb-6">
-          <h1 className="text-xl font-bold text-gray-900">
-            第二步：请选择要生成的报告类型
-          </h1>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {REPORT_TYPE_OPTIONS.map((option) => (
-            <ReportTypeCard
-              key={option.type}
-              {...option}
-              selected={selectedType === option.type}
-              onSelect={setSelectedType}
-            />
-          ))}
         </div>
       </div>
 
