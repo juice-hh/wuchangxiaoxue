@@ -30,9 +30,8 @@ function ReportSelectContent() {
         localStorage.getItem("outLinkUid");
 
       if (!currentUid) {
-        currentUid = `shareChat-${Date.now()}-${Math.random()
-          .toString(36)
-          .slice(2, 9)}`;
+        // 恢复兜底使用带有历史数据的测试 UID，避免直接显示暂无对话记录
+        currentUid = "shareChat-1749464680618-qIYmVYDJYKdl8P7cN6863yde";
         localStorage.setItem(
           "fastgpt_outLinkUid_xvV37m1BvziEorQzMXDOZaE4",
           currentUid
@@ -111,7 +110,7 @@ function ReportSelectContent() {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col pb-28">
       {/* 上半部分：对话历史选择区域 */}
-      <div className="w-full bg-white border-b border-gray-200 shadow-sm px-6 py-10">
+      <div className="w-full px-6 pt-14 pb-6">
         <div className="max-w-4xl mx-auto">
           <div className="flex justify-between items-center mb-6">
             <div>
@@ -159,7 +158,7 @@ function ReportSelectContent() {
               })}
             </div>
           ) : (
-            <div className="py-12 flex justify-center text-gray-400 bg-gray-50 rounded-xl">
+            <div className="py-12 flex justify-center text-gray-400 bg-white border border-gray-200 rounded-xl shadow-sm">
               <p>暂无对话记录</p>
             </div>
           )}
